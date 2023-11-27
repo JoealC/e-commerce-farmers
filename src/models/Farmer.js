@@ -15,6 +15,10 @@ const farmerSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  phone_number: {
+    type: Number,
+    required: true,
+  },
   country: {
     type: String,
     required: true,
@@ -25,8 +29,13 @@ const farmerSchema = new mongoose.Schema({
       ref: 'Product',
     },
   ],
+  created_at:{
+    type: Date,
+    default: Date.now()
+  },
   
-})
+}, 
+{timestamps: false})
 
 const Farmer = mongoose.model('Farmer', farmerSchema);
 

@@ -19,10 +19,14 @@ const productSchema = new mongoose.Schema({
   },
   country: {
     type: String,
-    required: true,
+  },
+  created_at:{
+    type: Date,
+    default: Date.now()
   },
   images: [String], 
-});
+},
+{timestamps: false});
 
 const Product = mongoose.model('Product', productSchema);
 

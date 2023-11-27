@@ -20,7 +20,12 @@ const adminSchema = new mongoose.Schema({
     enum: ['admin', 'subadmin'],
     default: 'admin',
   },
-})
+  created_at:{
+    type: Date,
+    default: Date.now()
+  },
+},
+{timestamps: false})
 
 const Admin = mongoose.model('Admin', adminSchema);
 

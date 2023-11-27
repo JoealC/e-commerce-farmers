@@ -21,8 +21,13 @@ const categorySchema = new mongoose.Schema({
         ref: 'FarmerProduct',
     }
   ],
+  created_at:{
+    type: Date,
+    default: Date.now()
+  },
   
-})
+}, 
+{timestamps: false})
 
 const Category = mongoose.model('Category', categorySchema);
 

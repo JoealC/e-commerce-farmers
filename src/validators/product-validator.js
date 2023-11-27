@@ -1,12 +1,12 @@
-import Joi from 'joi';
+import Joi, { string } from 'joi';
 import { errorResponse } from '../middleware/response';
 
 const productValidation = Joi.object({
   name: Joi.string().min(3).max(200).required(),
   description: Joi.string().min(3).max(200).required(),
-  price: Joi.number().min(0).required(),
+  price: Joi.number().required(),
   category: Joi.string().min(3).max(200).required(),
-  image: Joi.string().uri(),
+  images: Joi.array().items(Joi.string().uri()),
 });
 
 export const productValidator = (req, res, next) => {

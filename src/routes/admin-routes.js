@@ -14,6 +14,7 @@ import {
     editFarmer,
     getFarmerDetails,
     deleteFarmer,
+    searchFarmers,
     approveBuyerKYC,
     rejectBuyerKYC,
     lisAllBuyers,
@@ -47,27 +48,30 @@ import { IdValidator } from "../validators/Id-validator";
 import { categoryValidator } from "../validators/category-validator";
 import { productValidator } from "../validators/product-validator";
 import { shipmentValidator } from "../validators/shipment-validator";
+import { registerValidator } from "../validators/register-validator";
+import { UpdateValidator } from "../validators/update-validator";
 
 const adminRoutes = Router()
 
 //Admin Management
 adminRoutes.post('/register-admin',registerAdminValidator, registerAdmin)
 adminRoutes.post('/login-admin',loginValidator, loginAdmin)
-adminRoutes.get('/admins', getAdmins)
+adminRoutes.get('/get-admins', getAdmins)
 adminRoutes.put('/update-admin/:id',authenticateAdmin,UpdateAdminValidator,IdValidator, updateAdmin)
 adminRoutes.delete('/delete-admin/:id', authenticateAdmin,IdValidator, deleteAdmin)
 
 // Subadmin Management
 adminRoutes.post('/add-subadmin',authenticateAdmin,registerAdminValidator, addSubAdmin);
 adminRoutes.put('/edit-subadmin/:id',authenticateAdmin,UpdateAdminValidator,IdValidator, editSubAdmin);
-adminRoutes.get('/subadmin/:subAdminId',authenticateAdmin, getSubAdminDetails);
-adminRoutes.delete('/delete-subadmin/:subAdminId',authenticateAdmin,IdValidator, deleteSubAdmin);
+adminRoutes.get('/subadmin/:id',authenticateAdmin,IdValidator, getSubAdminDetails);
+adminRoutes.delete('/delete-subadmin/:id',authenticateAdmin,IdValidator, deleteSubAdmin);
 
 //Farmer Management
-adminRoutes.post('/add-farmer',authenticateAdmin,registerAdminValidator, addFarmer)
-adminRoutes.put('/edit-farmer/:id',authenticateAdmin,UpdateAdminValidator, editFarmer)
-adminRoutes.get('/farmer/:farmerId',authenticateAdmin, getFarmerDetails)
-adminRoutes.delete('/delete-farmer/:farmerId',authenticateAdmin,IdValidator, deleteFarmer)
+adminRoutes.post('/add-farmer',authenticateAdmin,registerValidator, addFarmer)
+adminRoutes.put('/edit-farmer/:id',authenticateAdmin,UpdateValidator, IdValidator, editFarmer)
+adminRoutes.get('/farmer/:id',authenticateAdmin,IdValidator, getFarmerDetails)
+adminRoutes.delete('/delete-farmer/:id',authenticateAdmin,IdValidator, deleteFarmer)
+adminRoutes.get('/search-buyers', authenticateAdmin, searchFarmers)
 
 //Buyer Management
 adminRoutes.put('/approve-buyer-kyc/:buyerId',authenticateAdmin,IdValidator, approveBuyerKYC)
@@ -75,7 +79,7 @@ adminRoutes.put('/reject-buyer-kyc/:buyerId', authenticateAdmin,IdValidator, rej
 adminRoutes.get('/buyers',authenticateAdmin, lisAllBuyers)
 adminRoutes.get('/kyc-pending-buyers',authenticateAdmin, listKYCPendingBuyers)
 adminRoutes.get('/buyer/:buyerId',authenticateAdmin,IdValidator, getBuyerDetails)
-adminRoutes.delete('/delete-buyer/:buyerId',authenticateAdmin, deleteBuyer)
+adminRoutes.delete('/delete-buyer/:buyerId',authenticateAdmin,IdValidator, deleteBuyer)
 adminRoutes.put('/block-buyer/:buyerId',authenticateAdmin,IdValidator, blockBuyer)
 adminRoutes.put('/unblock-buyer/:buyerId',authenticateAdmin,IdValidator, unblockBuyer)
 adminRoutes.get('/search-buyers',authenticateAdmin, searchBuyers)
@@ -83,23 +87,24 @@ adminRoutes.get('/search-buyers',authenticateAdmin, searchBuyers)
 // Category Management
 adminRoutes.post('/create-category',authenticateAdmin,categoryValidator, createCategory)
 adminRoutes.get('/categories',authenticateAdmin, listCategories)
-adminRoutes.get('/category/:categoryId',authenticateAdmin,IdValidator, getCategoryDetails)
-adminRoutes.put('/update-category/:categoryId',authenticateAdmin,categoryValidator, IdValidator, updateCategory)
-adminRoutes.delete('/delete-category/:categoryId',authenticateAdmin, deleteCategory)
+adminRoutes.get('/category/:id',authenticateAdmin,IdValidator, getCategoryDetails)
+adminRoutes.put('/update-category/:id',authenticateAdmin,categoryValidator, IdValidator, updateCategory)
+adminRoutes.delete('/delete-category/:id',authenticateAdmin,IdValidator, deleteCategory)
 
 // Product Management
-adminRoutes.post('/create-product',authenticateAdmin, productValidator, imageUploadController.uploadImage, createProduct)
+adminRoutes.post('/create-product',authenticateAdmin, productValidator, createProduct)
+adminRoutes.post('/image-upload', imageUploadController.uploadImage)
 adminRoutes.get('/products',authenticateAdmin, listProducts)
-adminRoutes.get('/product/:productId',authenticateAdmin,IdValidator, getProductDetails)
-adminRoutes.put('/update-product/:productId',authenticateAdmin, productValidator, IdValidator, imageUploadController.uploadImage, updateProduct)
-adminRoutes.delete('/delete-product/:productId',authenticateAdmin, deleteProduct)
-adminRoutes.put('/approve-reject-farmer-products/:productId/:farmerId',authenticateAdmin, approveRejectFarmerProducts)
+adminRoutes.get('/product/:id',authenticateAdmin,IdValidator, getProductDetails)
+adminRoutes.put('/update-product/:id',authenticateAdmin, productValidator, IdValidator, updateProduct)
+adminRoutes.delete('/delete-product/:id',authenticateAdmin,IdValidator, deleteProduct)
+adminRoutes.put('/approve-reject-farmer-products/:productId/:farmerId',authenticateAdmin,IdValidator, approveRejectFarmerProducts)
 
 // Shipment Management
 adminRoutes.post('/create-shipment',authenticateAdmin,shipmentValidator, createShipment)
 adminRoutes.get('/shipments',authenticateAdmin, listShipments)
-adminRoutes.get('/shipment/:shipmentId',authenticateAdmin,IdValidator, getShipmentDetails)
-adminRoutes.put('/update-shipment/:shipmentId',authenticateAdmin,shipmentValidator, IdValidator, updateShipment)
-adminRoutes.delete('/delete-shipment/:shipmentId',authenticateAdmin, deleteShipment)
+adminRoutes.get('/shipment/:id',authenticateAdmin,IdValidator, getShipmentDetails)
+adminRoutes.put('/update-shipment/:id',authenticateAdmin,shipmentValidator, IdValidator, updateShipment)
+adminRoutes.delete('/delete-shipment/:id',authenticateAdmin,IdValidator, deleteShipment)
 
 export default adminRoutes

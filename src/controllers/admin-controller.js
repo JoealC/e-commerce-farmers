@@ -17,7 +17,7 @@ export const registerAdmin = async(req, res) =>{
       const{ username, email, password} = req.body
       const existingAdmin = await Admin.findOne({email})
       if(existingAdmin){
-        return errorResponse(res, 401, 'Admin Already Exists')
+        return errorResponse(res, 401, 'Admin Already Exists', existingAdmin)
       }
       const hashedPassword = await bcrypt.hash(password, 10)
       const newAdmin = new Admin({
@@ -26,9 +26,10 @@ export const registerAdmin = async(req, res) =>{
         password: hashedPassword,
       })
       await newAdmin.save()
+      newAdmin.password = null
       successResponse(res, 200, 'Admin registered successfully', newAdmin)
     }catch(err){
-      errorResponse (res,500,"Internal Server Error")
+      errorResponse (res,500,"Internal Server Error", err)
     }
   }
 
@@ -37,7 +38,7 @@ export const loginAdmin = async(req, res) => {
       const {email, password} = req.body
       const admin = await Admin.findOne({email})
       if(!admin){
-        return errorResponse (res, 401, "Authentication failed")
+        return errorResponse (res, 401, "Authentication failed", {})
       }
       const passwordMatch = await bcrypt.compare(password, admin.password)
       if(!passwordMatch){
@@ -52,11 +53,13 @@ export const loginAdmin = async(req, res) => {
   
 export const getAdmins = async (req, res) => {
     try {
-      const admins = await Admin.find();
+      const admins = await Admin.find().select('-password');
+      if(admins.length === 0){
+       return errorResponse (res, 401, "No admins found", {})
+      }
       successResponse(res, 200, 'Admins listed successfully', admins )
     } catch (error) {
-      console.error('Error fetching admins:', error);
-    errorResponse(res, 500, "Internal Server Error")  
+    errorResponse(res, 500, "Internal Server Error", error)  
 }
   }
 
@@ -85,9 +88,9 @@ export const getAdmins = async (req, res) => {
 
 export const deleteAdmin = async (req, res) => {
     try{
-      const deleteAdmin = await Admin.findByIdAndDelete(req.params.id)
+      const deleteAdmin = await Admin.findByIdAndDelete(req.params.id).select('-password')
       if(!deleteAdmin){
-        errorResponse(res, 404, 'Admin not found');
+        return errorResponse(res, 404, 'Admin not found', {});
       }
       successResponse(res,200, "Admin deleted Successfully", deleteAdmin);
       }catch(err){
@@ -102,18 +105,20 @@ export const deleteAdmin = async (req, res) => {
 export const addSubAdmin = async(req, res) => {
     try{
         const {username, password, email} = req.body
-        const existingSubAdmin = await Subadmin.findOne({username})
+        const existingSubAdmin = await Admin.findOne({username})
         if(existingSubAdmin){
-          return errorResponse(res, 401, 'Subadmin Already Exists')
+          return errorResponse(res, 401, 'Subadmin Already Exists', existingSubAdmin)
         }
         const hashedPassword =await bcrypt.hash(password, 10)
-        const newSubAdmin = new Subadmin({
+        const newSubAdmin = new Admin({
           username,
           email,
           password: hashedPassword,
+          role: 'subadmin',
         })
         await newSubAdmin.save()
-        successResponse(res, 200, 'Subadmin registered successfully')
+        newSubAdmin.password = null
+        successResponse(res, 200, 'Subadmin registered successfully', newSubAdmin)
       }catch(err){
         errorResponse (res,500,"Internal Server Error", err)
       }
@@ -123,19 +128,20 @@ export const addSubAdmin = async(req, res) => {
         try{
             const {username, password, email } = req.body
             const hashedPassword = await bcrypt.hash(password, 10)
-            const editedSubadmin = await Subadmin.findByIdAndUpdate(
+            const editedSubadmin = await Admin.findByIdAndUpdate(
                 req.params.id,
                 {
                     username,
                     email,
                     password: hashedPassword,
+                    role: "subadmin"
                 },
                 {new: true}
             ).select("-password")
             if(!editedSubadmin){
-                return errorResponse(res, 404, 'Subadmin not found')
+                return errorResponse(res, 404, 'Subadmin not found', {})
             }
-            successResponse(res, 200, "Subadmin edited successfully", editLibrarian)
+            successResponse(res, 200, "Subadmin edited successfully", editedSubadmin)
         }catch(err){
             errorResponse(res, 500, 'Internal Server error', err)
         }
@@ -143,12 +149,11 @@ export const addSubAdmin = async(req, res) => {
 
  export const getSubAdminDetails= async(req, res) =>{
         try{
-            const {subAdminId} = req.params
-            const subAdmin = await Subadmin.findById(subAdminId).select("-password")
+            const subAdmin = await Admin.findById(req.params.id).select("-password")
             if(!subAdmin){
-              return errorResponse(res, 404, "Subadmin not found")
+              return errorResponse(res, 404, "Subadmin not found", {})
             }else{ 
-              successResponse(res, 200, subAdmin)
+             return successResponse(res, 200,"Listed subadmin details", subAdmin)
             }
         }catch(error){
             errorResponse(res, 500, "Error in getting subadmin details", error)
@@ -157,10 +162,9 @@ export const addSubAdmin = async(req, res) => {
  
 export const deleteSubAdmin = async(req, res) => {
         try {
-            const { subAdminId } = req.params;
-            const deleteSubAdmin = await Subadmin.findByIdAndRemove(subAdminId);
+            const deleteSubAdmin = await Admin.findByIdAndDelete(req.params.id).select('-password');
             if(!deleteSubAdmin){
-              errorResponse(res, 404, "Subadmin ID not found")
+              return errorResponse(res, 404, "Subadmin ID not found", {})
             }
             successResponse(res, 201, 'Subadmin deleted successfully',deleteSubAdmin );
           } catch (error) {
@@ -172,18 +176,21 @@ export const deleteSubAdmin = async(req, res) => {
 
 export const addFarmer = async(req, res) => {
     try{
-        const {username, password, email} = req.body
+        const {username, password, email, phone_number, country} = req.body
         const existingFarmer = await Farmer.findOne({username})
         if(existingFarmer){
-          return errorResponse(res, 401, 'Farmer Already Exists')
+          return errorResponse(res, 401, 'Farmer Already Exists', existingFarmer)
         }
         const hashedPassword =await bcrypt.hash(password, 10)
         const newFarmer = new Farmer({
           username,
           email,
           password: hashedPassword,
+          phone_number,
+          country,
         })
         await newFarmer.save()
+        newFarmer.password = null
         successResponse(res, 200, 'Farmer registered successfully', newFarmer)
       }catch(err){
         errorResponse (res,500,"Internal Server Error", err)
@@ -192,7 +199,7 @@ export const addFarmer = async(req, res) => {
 
 export const editFarmer = async(req, res) => {
         try{
-            const {username, password, email } = req.body
+            const {username, password, email, phone_number, country } = req.body
             const hashedPassword = await bcrypt.hash(password, 10)
             const editedFarmer = await Farmer.findByIdAndUpdate(
                 req.params.id,
@@ -200,26 +207,28 @@ export const editFarmer = async(req, res) => {
                     username,
                     email,
                     password: hashedPassword,
+                    phone_number,
+                    country,
                 },
                 {new: true}
             ).select("-password")
             if(!editedFarmer){
                 return errorResponse(res, 404, 'Farmer not found', {})
             }
-            successResponse(res, 200, "Farmer edited successfully", editLibrarian)
+            successResponse(res, 200, "Farmer edited successfully", editedFarmer)
         }catch(err){
+          console.log(err)
             errorResponse(res, 500, 'Server error', err)
         }
 }
 
 export const getFarmerDetails= async(req, res) =>{
     try{
-        const {farmerId} = req.params
-        const farmer = await Farmer.findById(farmerId).select("-password")
+        const farmer = await Farmer.findById(req.params.id).select("-password")
         if(!farmer){
-          return errorResponse(res, 404, "Farmer not found")
+          return errorResponse(res, 404, "Farmer not found", {})
         }else{ 
-          successResponse(res, 200,"listed farmer details successfully", farmer)
+         return successResponse(res, 200,"listed farmer details successfully", farmer)
         }
     }catch(error){
         errorResponse(res, 500, "Error in getting farmer details", error)
@@ -228,16 +237,40 @@ export const getFarmerDetails= async(req, res) =>{
 
 export const deleteFarmer = async(req, res) => {
     try {
-        const { farmerId } = req.params;
-        const deleteFarmer = await Farmer.findByIdAndRemove(farmerId);
+        const deleteFarmer = await Farmer.findByIdAndDelete(req.params.id).select('-password')
         if(!deleteFarmer){
-          errorResponse(res, 404, "Farmer ID not found")
+         return errorResponse(res, 404, "Farmer ID not found", {})
         }
         successResponse(res, 201, 'Farmer deleted successfully', deleteFarmer);
       } catch (error) {
         errorResponse(res, 500, 'Error deleting farmer', error);
       }
 }  
+
+export const searchFarmers = async (req, res) => {
+  const { search } = req.query;
+
+  try {
+    let query = {};
+
+    if (search) {
+      const searchRegex = new RegExp(search, 'i'); 
+
+      query = {
+        $or: [
+          { username: searchRegex },
+          { email: searchRegex },
+          { country: searchRegex },
+        ],
+      };
+    }
+
+    const farmers = await Farmer.find(query);
+    successResponse(res, 200, 'Filtered Successful', farmers);
+  } catch (error) {
+    errorResponse(res, 500, 'Internal Server Error', error);
+  }
+}
 
 //Buyer Management
 
@@ -246,12 +279,11 @@ export const approveBuyerKYC = async (req, res) => {
     try {
       const buyer = await Buyer.findById(buyerId);
          if (!buyer) {
-        return errorResponse(res, 404, 'Buyer not found', buyer)
+        return errorResponse(res, 404, 'Buyer not found', {})
           }
-        buyer.kyc_Status = 'approved';
+        buyer.kyc_Status = '1';
       await buyer.save();
-  
-      successResponse(res, 200, 'Buyer KYC approved successfully');
+      successResponse(res, 200, 'Buyer KYC approved successfully', buyer);
     } catch (error) {
       errorResponse(res, 500, 'Internal Server Error', error);
     }
@@ -262,12 +294,12 @@ export const approveBuyerKYC = async (req, res) => {
     try {
       const buyer = await Buyer.findById(buyerId);
          if (!buyer) {
-        return errorResponse(res, 404, 'Buyer not found', buyer)
+        return errorResponse(res, 404, 'Buyer not found', {})
           }
-        buyer.kyc_Status = 'rejected';
+        buyer.kyc_Status = '0';
       await buyer.save();
   
-      successResponse(res, 200, 'Buyer KYC rejected successfully');
+      successResponse(res, 200, 'Buyer KYC rejected successfully', buyer);
     } catch (error) {
        errorResponse(res, 500, 'Internal Server Error', error);
     }
@@ -276,6 +308,9 @@ export const approveBuyerKYC = async (req, res) => {
 export const lisAllBuyers = async (req, res) => {
     try {
       const buyers = await Buyer.find();
+      if(buyers.length === 0){
+        return errorResponse(res, 401, "No data found", {})
+      }
       successResponse(res, 200, 'listed all buyers', buyers);
     } catch (error) {
       errorResponse(res, 500, 'Internal Server Error', error);
@@ -284,7 +319,10 @@ export const lisAllBuyers = async (req, res) => {
 
 export const listKYCPendingBuyers = async (req, res) => {
     try {
-      const kycPendingBuyers = await Buyer.find({ kycStatus: 'pending' });
+      const kycPendingBuyers = await Buyer.find({ kycStatus: '3' });
+      if(!kycPendingBuyers){
+       return errorResponse(res, 401, "No KYC pending Buyers", {})
+      }
       successResponse(res, 200, 'listed all KYC pending buyers', kycPendingBuyers);
     } catch (error) {
       errorResponse(res, 500, 'Internal Server Error', error);  
@@ -298,7 +336,7 @@ export const getBuyerDetails = async (req, res) => {
       const buyer = await Buyer.findById(buyerId)
 
       if (!buyer) {
-        return errorResponse(res, 404, 'Buyer not found', buyer)
+        return errorResponse(res, 404, 'Buyer not found', {})
       }
 
       successResponse(res, 200, 'listed buyer detail', buyer)
@@ -313,7 +351,7 @@ export const deleteBuyer =  async(req, res) => {
         const { buyerId } = req.params;
         const deletedBuyer = await Buyer.findByIdAndRemove(buyerId);
         if(!deletedBuyer){
-          errorResponse(res, 404, "Buyer ID not found")
+          return errorResponse(res, 404, "Buyer ID not found", {})
         }
         successResponse(res, 201, 'Buyer deleted successfully', deletedBuyer)
       } catch (error) {
@@ -325,11 +363,11 @@ export const blockBuyer = async(req, res) => {
     try {
         const { BuyerId } = req.params;
         if (!BuyerId) {
-          return errorResponse(res, 400, 'Buyer ID is required');
+          return errorResponse(res, 400, 'Buyer ID is required', {});
         }
         const buyer = await Buyer.findById(userId);
         if (!buyer) {
-            return errorResponse(res, 404, 'Buyer not found');
+            return errorResponse(res, 404, 'Buyer not found', {});
         }
         if (buyer.is_Blocked) {
            return successResponse(res, 400, 'Buyer is already blocked');
@@ -346,11 +384,11 @@ export const unblockBuyer = async(req, res) => {
     try {
         const { BuyerId } = req.params;
         if (!BuyerId) {
-          return errorResponse(res, 400, 'Buyer ID is required');
+          return errorResponse(res, 400, 'Buyer ID is required', {});
         }
         const buyer = await Buyer.findById(userId);
         if (!buyer) {
-            return errorResponse(res, 404, 'Buyer not found');
+            return errorResponse(res, 404, 'Buyer not found', {});
         }
         if (buyer.is_Blocked) {
            return successResponse(res, 400, 'Buyer is already unblocked');
@@ -410,6 +448,9 @@ export const createCategory =  async (req, res) => {
 export const listCategories = async (req, res) => {
     try {
       const categories = await Category.find();
+      if(categories.length === 0){
+        return errorResponse(res, 401, "No categories found", {})
+      }
       successResponse(res, 200, "Listed Category Successfully", categories);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -418,10 +459,8 @@ export const listCategories = async (req, res) => {
   }
 
 export const getCategoryDetails = async (req, res) => {
-  const { categoryId } = req.params;
-
   try {
-    const category = await Category.findById(categoryId);
+    const category = await Category.findById(req.params.id);
 
     if (!category) {
       return errorResponse(res, 404, 'Category not found', category );
@@ -434,11 +473,10 @@ export const getCategoryDetails = async (req, res) => {
 }
 
 export const updateCategory = async (req, res) => {
-    const { categoryId } = req.params;
-    const { name, description } = req.body
     try {
-        const updatedCategory = await Category.findByIdAndUpdate(
-          categoryId,
+      const { name, description } = req.body
+      const updatedCategory = await Category.findByIdAndUpdate(
+          req.params.id,
           { name, description },
           { new: true }
         )
@@ -449,12 +487,11 @@ export const updateCategory = async (req, res) => {
     }}
 
 export const deleteCategory = async(req, res) => {
-    const { categoryId} = req.params
     try{
-        await Category.findByIdAndDelete(categoryId)
-        await Product.deleteMany({category: categoryId})
-        await FarmerProduct.deleteMany({category: categoryId})
-        successResponse(res, 200, 'Category and related items delted successfully')
+        await Category.findByIdAndDelete(req.params.id)
+        await Product.deleteMany({category: req.params.id})
+        await FarmerProduct.deleteMany({category: req.params.id})
+        successResponse(res, 200, 'Category and related items delted successfully', {})
 
     }catch(err){
         errorResponse(res, 500, "Internal Server Error", err)
@@ -465,15 +502,28 @@ export const deleteCategory = async(req, res) => {
 //Product Management
 
 export const createProduct = async (req, res) => {
-    const { name, description, price, category, image } = req.body
-    try {
-        const newProduct = await Product.create({ name, description, price, category, image });
-  
-        successResponse(res, 201, "Product created successfully", newProduct);
-      } catch (error) {
-        errorResponse(res, 500, "Internal Server Error", error)
-        }
+  const { name, description, price, category, images } = req.body;
+
+  try {
+    const newProduct = await Product.create({ name, description, price, category, images });
+
+    const existingCategory = await Category.findById(category);
+
+    if (!existingCategory) {
+      const newCategory = await Category.create({ name: 'New Category', description: 'Category description' });
+
+      newCategory.products.push(newProduct);
+      await newCategory.save();
+    } else {
+      existingCategory.products.push(newProduct);
+      await existingCategory.save();
     }
+
+    successResponse(res, 201, 'Product created successfully', newProduct);
+  } catch (error) {
+    errorResponse(res, 500, 'Internal Server Error', error);
+  }
+}
 
 export const listProducts = async (req, res) => {
     try {
@@ -486,10 +536,9 @@ export const listProducts = async (req, res) => {
   }
 
  export const getProductDetails = async (req, res) => {
-    const { productId } = req.params;
 
     try {
-      const product = await Product.findById(productId);
+      const product = await Product.findById(req.params.id);
 
       if (!product) {
         return errorResponse (res, 404, 'Product not found', product );
@@ -503,11 +552,11 @@ export const listProducts = async (req, res) => {
   }
 
 export const updateProduct = async (req, res) => {
-    const { productId } = req.params;
-    const { name, description, price, category, image } = req.body;
     try {
+      const { name, description, price, category, image } = req.body;
+
       const updatedProduct = await Product.findByIdAndUpdate(
-        productId,
+        req.params.id,
         { name, description, price, category, image },
         { new: true }
       );
@@ -519,17 +568,28 @@ export const updateProduct = async (req, res) => {
     }
   }
 
-export const deleteProduct = async(req, res) => {
-    const {productId} = req.params
-    try{
-        await Product.findByIdAndDelete(productId)
-        await FarmerProduct.deleteMany({product: productId})
-        successResponse(res, 200, "Product and realted farmer products deleted successfully")
+export const deleteProduct = async (req, res) => {
 
-    }catch (error) {
-        errorResponse(res, 500, "Internal Server Error", error)
+  try {
+    const product = await Product.findById(req.params.id);
 
+    if (!product) {
+      return errorResponse(res, 404, 'Product not found');
     }
+
+    const category = await Category.findOne({ products: req.params.id });
+
+    if (category) {
+      category.products.pull(req.params.id);
+      await category.save();
+    }
+    await product.deleteOne({_id: req.params.id});
+
+    successResponse(res, 200, 'Product deleted successfully');
+  } catch (error) {
+    console.log(error)
+    errorResponse(res, 500, 'Internal Server Error', error);
+  }
 }
 
 export const approveRejectFarmerProducts = async (req, res) => {
@@ -542,7 +602,7 @@ export const approveRejectFarmerProducts = async (req, res) => {
       })
   
       if (!farmerProduct) {
-        return errorResponse(res, 404, 'Farmer product not found' );
+        return errorResponse(res, 404, 'Farmer product not found', {} );
       }
         farmerProduct.status = approvalStatus;
       await farmerProduct.save();
@@ -557,9 +617,10 @@ export const approveRejectFarmerProducts = async (req, res) => {
 //Shipment Management
 
 export const createShipment = async (req, res) => {
-    const { fromCountry, toCountry, cost } = req.body;
     try {
-      const newShipment = await Shipment.create({ fromCountry, toCountry, cost });
+      const { from_Country, to_Country, cost } = req.body;
+
+      const newShipment = await Shipment.create({ from_Country, to_Country, cost });
 
       successResponse(res, 201, 'Shipment created successfully', newShipment);
     } catch (error) {
@@ -577,13 +638,13 @@ export const listShipments = async (req, res) => {
   }
 
 export const getShipmentDetails = async (req, res) => {
-    const { shipmentId } = req.params;
+
 
     try {
-      const shipment = await Shipment.findById(shipmentId);
+      const shipment = await Shipment.findById(req.params.id);
 
       if (!shipment) {
-        return errorResponse(res, 404, 'Shipment not found');
+        return errorResponse(res, 404, 'Shipment not found', {});
       }
 
       successResponse(res, 200, 'Shipment details fetched successfully', shipment);
@@ -593,11 +654,10 @@ export const getShipmentDetails = async (req, res) => {
   }
 
  export const updateShipment = async (req, res) => {
-    const { shipmentId } = req.params;
     const { fromCountry, toCountry, cost } = req.body;
     try {
       const updatedShipment = await Shipment.findByIdAndUpdate(
-        shipmentId,
+        req.params.id,
         { fromCountry, toCountry, cost },
         { new: true }
       );
@@ -609,10 +669,8 @@ export const getShipmentDetails = async (req, res) => {
   }
 
 export const deleteShipment = async (req, res) => {
-    const { shipmentId } = req.params;
-
     try {
-      await Shipment.findByIdAndDelete(shipmentId);
+      await Shipment.findByIdAndDelete(req.params.id);
       successResponse(res, 200, 'Shipment deleted successfully');
     } catch (error) {
       errorResponse(res, 500, 'Error deleting shipment:', error);

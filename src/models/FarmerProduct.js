@@ -27,10 +27,15 @@ const farmerProductSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected'],
-    default: 'pending',
+    enum: ['3', '1', '0'],
+    default: '3',
   },
-});
+  created_at:{
+    type: Date,
+    default: Date.now()
+  },
+},
+{timestamps: false});
 
 const FarmerProduct = mongoose.model('FarmerProduct', farmerProductSchema);
 

@@ -15,7 +15,12 @@ const subadminSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-});
+  created_at:{
+    type: Date,
+    default: Date.now()
+  },
+},
+{timestamps: false});
 
 const Subadmin = mongoose.model('Subadmin', subadminSchema);
 

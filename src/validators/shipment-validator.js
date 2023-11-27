@@ -2,8 +2,8 @@ import Joi from 'joi';
 import { errorResponse } from '../middleware/response'
 
 const shipmentValidation = Joi.object({
-  fromCountry: Joi.string().min(2).max(50).required(),
-  toCountry: Joi.string().min(2).max(50).required(),
+  from_Country: Joi.string().min(2).max(50).required(),
+  to_Country: Joi.string().min(2).max(50).required(),
   cost: Joi.number().min(0).required(),
 });
 

@@ -13,7 +13,12 @@ const shipmentSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-})
+  created_at:{
+    type: Date,
+    default: Date.now()
+  },
+},
+{timestamps: false})
 
 const Shipment = mongoose.model('Shipment', shipmentSchema);
 

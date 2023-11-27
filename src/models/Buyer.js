@@ -11,6 +11,10 @@ const buyerSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
   },
+  phone_number: {
+    type: Number,
+    required: true,
+  },
   password: {
     type: String,
     required: true,
@@ -25,8 +29,8 @@ const buyerSchema = new mongoose.Schema({
   },
   kyc_Status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected'],
-    default: 'pending',  
+    enum: ['3', '1', '0'],
+    default: '3',  
 },
 is_Blocked: Boolean,
 orders: [
@@ -35,7 +39,12 @@ orders: [
       ref: 'Order',
     },
   ],
-})
+  created_at:{
+    type: Date,
+    default: Date.now()
+  },
+},
+{timestamps: false})
 
 const Buyer = mongoose.model('Buyer', buyerSchema);
 

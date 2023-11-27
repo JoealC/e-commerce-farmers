@@ -3,7 +3,7 @@ import { errorResponse } from "../middleware/response";
 
 const categoryValidation = Joi.object({
     name: Joi.string().min(3).max(200).required(),
-    description:  Joi.string().min(3).max(200).required(),
+    description:  Joi.string().min(3).max(20000).required(),
 })
 
 export const categoryValidator = (req, res, next) => {

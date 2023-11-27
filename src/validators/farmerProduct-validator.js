@@ -5,7 +5,7 @@ const farmerProductValidation = Joi.object({
   name: Joi.string().min(3).max(200).required(),
   quantity: Joi.number().min(0).required(),
   price: Joi.number().min(0).required(),
-  category: Joi.string().min(2).max(50).required(),
+  category: Joi.string().required(),
 });
 
 export const farmerProductValidator = (req, res, next) => {

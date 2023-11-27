@@ -25,10 +25,15 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'shipped', 'delivered', 'cancelled'],
-    default: 'pending',
+    enum: ['3', '2', '1', '0'],
+    default: '3',
   },
-})
+  created_at:{
+    type: Date,
+    default: Date.now()
+  },
+},
+{timestamps: false})
 
 const Order = mongoose.model('Order', orderSchema);
 
